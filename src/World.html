@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Andrew Susanto - ASG 3A + 3B</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="webgl" width="450" height="450" style="float:left">
+    Please use a browser that supports "canvas"
+    </canvas>
+    <br>
+    <div style="float: left; height: calc(100vh - 50px); padding-left: 50px">
+      <p id="numdot"> numdot 0 ms: 0 fps: 0</p>
+      <br>
+      <p> Rotate Camera with Right Click.</p>
+      <p> Left click enables in-canvas movement with WASD/Arrows. Press Esc to unlock cursor.</p>
+      <br>
+      <p>
+        <button type="button" id="resetCamButton">Reset Camera</button>
+      </p>
+    </div>
+     
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix-cse160.js"></script>
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="Cube.js"></script>
+    <script src="build.js"></script>
+    <script src="World.js"></script>
+    <script src="Camera.js"></script>
+  </body>
+</html>
