@@ -131,7 +131,7 @@ function renderTesting() {
     if(g_normalOn) {
         target.textureNum = -3;
     }
-    target.matrix.translate(0, 0.75, 0);
+    target.matrix.translate(0, 0.65, 0);
     target.matrix.scale(1.25, 1.25, 1.25);
     target.matrix.translate(-0.5, -0.5, -0.5);
     target.rendertest();
@@ -145,6 +145,16 @@ function renderTesting() {
     room.matrix.scale(-10, -10, -10);
     room.matrix.translate(-0.5, -0.5, -0.5);
     room.rendertest();
+
+    var ball = new Sphere();
+    ball.color = [0, 0, 0, 1];
+    if(g_normalOn) {
+        ball.textureNum = -3;
+    }
+    ball.matrix.translate(0.63, 1.25, 0.63);
+    ball.matrix.scale(1.25, 1.25, 1.25);
+    ball.matrix.translate(-0.5, -0.5, -0.5);
+    ball.render();
 
 }
 

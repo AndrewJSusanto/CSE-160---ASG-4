@@ -1,29 +1,13 @@
-class Cube {
+class Sphere {
     constructor(){
-        this.type = 'cube';
+        this.type = 'sphere';
         //this.position = [0.0, 0.0, 0.0];
         this.color = [1.0, 1.0, 1.0, 1.0];
         //this.size = 5.0;
         //this.sides = 3.0;
         this.matrix = new Matrix4();
         this.textureNum = -2; // -2 color, -1 uv, 0 tex0, else err
-        this.cubeVerts = [
-            0, 0, 0,   1, 1, 0,   1, 0, 0,
-            0, 0, 0,   0, 1, 0,   1, 1, 0,
-            0, 1, 0,   0, 1, 1,   1, 1, 1,
-            0, 1, 0,   1, 1, 1,   1, 1, 0,
-            0, 0, 0,   0, 0, 1,   0, 1, 0,
-            0, 1, 1,   0, 0, 1,   0, 1, 0,
-            1, 0, 1,   1, 1, 1,   1, 1, 0,
-            1, 0, 1,   1, 0, 0,   1, 1, 0,
-            0, 0, 1,   1, 0, 1,   1, 1, 1,
-            0, 0, 1,   0, 1, 1,   1, 1, 1,
-            0, 0, 0,   1, 0, 1,   0, 0, 1,
-            0, 0, 0,   1, 0, 0,   1, 0, 1
-        ]
-        this.uvCoords = [
-            
-        ]
+        this.verts32 = new Float32Array([]);
 
     }
 
@@ -42,49 +26,51 @@ class Cube {
         // Pass the matrix to u_ModelMatrix attribute
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
 
-        // Front of the cube
-        drawTriangle3DUV( [0, 0, 0,   1, 1, 0,   1, 0, 0], [0, 0, 1, 1, 1, 0] );
-        //drawTriangle3D( [0, 0, 0,   1, 1, 0,    1, 0, 0] );
-        drawTriangle3DUV( [0, 0, 0,   0, 1, 0,   1, 1, 0], [0, 0, 0, 1, 1, 1] );
-        //drawTriangle3D( [0, 0, 0,   0, 1, 0,    1, 1, 0] );
-        //0, 0, 1, 1, 1, 0
+        // stepsize
+        var d = Math.PI / 10;
+
+        // delta
+        // var dd = Math.PI / 100; 
+
+        // make delta equal to stepsize for full sphere
+        var dd = d;
+
+        // var uv = [0, 0,  0, 0,   0, 0,   0, 0,    0, 0,    0, 0];
 
 
-        // Top of the cube
-        gl.uniform4f(u_FragColor, rgba[0] * 0.9, rgba[1] * 0.9, rgba[2] * 0.9, rgba[3]);
-        drawTriangle3DUV( [0, 1, 0,   0, 1, 1,    1, 1, 1], [0, 0, 0, 1, 1, 1] );
-        // drawTriangle3D( [0, 1, 0,   0, 1, 1,    1, 1, 1] );
-        drawTriangle3DUV( [0, 1, 0,   1, 1, 1,    1, 1, 0], [0, 0, 1, 1, 1, 0] );
-        // drawTriangle3D( [0, 1, 0,   1, 1, 1,    1, 1, 0] );
+        for (var t = 0; t < Math.PI; t += d) {
+            for (var r = 0; r < (2 * Math.PI); r += d) { // full rotation
+                // parametric equations of sphere for xyz
 
-        // Left of the cube
-        gl.uniform4f(u_FragColor, rgba[0] * 0.5, rgba[1] * 0.5, rgba[2] * 0.5, rgba[3]);
-        drawTriangle3DUV( [0, 0, 0,   0, 0, 1,    0, 1, 0], [1, 0, 0, 0, 1, 1] );
-        // drawTriangle3D( [0, 0, 0,   0, 0, 1,    0, 1, 0] );
-        drawTriangle3DUV( [0, 1, 1,   0, 0, 1,    0, 1, 0], [0, 1, 0, 0, 1, 1] );
-        // drawTriangle3D( [0, 1, 1,   0, 0, 1,    0, 1, 0] );
+                var p1 = [Math.sin(t) * Math.cos(r), Math.sin(t) * Math.sin(r), Math.cos(t)];
+                var p2 = [Math.sin(t + dd) * Math.cos(r), Math.sin(t + dd) * Math.sin(r), Math.cos(t + dd)];
+                var p3 = [Math.sin(t) * Math.cos(r + dd), Math.sin(t) * Math.sin(r + dd), Math.cos(t)];
+                var p4 = [Math.sin(t + dd) * Math.cos(r + dd), Math.sin(t + dd) * Math.sin(r + dd), Math.cos(t + dd)];
 
-        // Right of the cube
-        gl.uniform4f(u_FragColor, rgba[0] * 0.8, rgba[1] * 0.8, rgba[2] * 0.7, rgba[3]);
-        drawTriangle3DUV( [1, 0, 1,   1, 1, 1,    1, 1, 0], [1, 0, 1, 1, 0, 1] );
-        // drawTriangle3D( [1, 0, 1,   1, 1, 1,    1, 1, 0] );
-        drawTriangle3DUV( [1, 0, 1,   1, 0, 0,    1, 1, 0], [1, 0, 0, 0, 0, 1] );
-        // drawTriangle3D( [1, 0, 1,   1, 0, 0,    1, 1, 0] );
+                var v = [];
+                var uv = [];
 
-        // Back of the cube
-        gl.uniform4f(u_FragColor, rgba[0] * 0.6, rgba[1] * 0.6, rgba[2] * 0.6, rgba[3]);
-        drawTriangle3DUV( [0, 0, 1,   1, 0, 1,    1, 1, 1], [1, 0, 0, 0, 0, 1] );
-        // drawTriangle3D( [0, 0, 1,   1, 0, 1,    1, 1, 1] );
-        drawTriangle3DUV( [0, 0, 1,   0, 1, 1,    1, 1, 1], [1, 0, 1, 1, 0, 1] );
-        // drawTriangle3D( [0, 0, 1,   0, 1, 1,    1, 1, 1] );
+                v = v.concat(p1);   uv = uv.concat([0, 0]);
+                v = v.concat(p2);   uv = uv.concat([0, 0]);
+                v = v.concat(p4);   uv = uv.concat([0, 0]);
 
-        // Bottom of the cube
-        gl.uniform4f(u_FragColor, rgba[0] * 0.5, rgba[1] * 0.5, rgba[2] * 0.5, rgba[3]);
-        drawTriangle3DUV( [0, 0, 0,   1, 0, 1,    0, 0, 1], [0, 1, 1, 0, 0, 0] );
-        // drawTriangle3D( [0, 0, 0,   1, 0, 1,    0, 0, 1] );
-        drawTriangle3DUV( [0, 0, 0,   1, 0, 0,    1, 0, 1], [0, 1, 1, 1, 1, 0] );
-        // drawTriangle3D( [0, 0, 0,   1, 0, 0,    1, 0, 1] );
+                gl.uniform4f(u_FragColor, 1, 1, 1, 1);
+                // gl.uniform4f(u_FragColor, 0.9, 0.7, 0.5, 1);
+                drawTriangle3DUVNormal(v, uv, v);
+                // spheres position is equivalent to the normal
 
+                v = [];
+                uv = [];
+
+                v = v.concat(p1);   uv = uv.concat([0, 0]);
+                v = v.concat(p4);   uv = uv.concat([0, 0]);
+                v = v.concat(p3);   uv = uv.concat([0, 0]);
+
+                // gl.uniform4f(u_FragColor, 1, 1, 1, 1);
+                gl.uniform4f(u_FragColor, 0.5, 0.5, 1, 1);
+                drawTriangle3DUVNormal(v, uv, v);
+            }
+        }
     }
 
     renderfast() {
