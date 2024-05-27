@@ -96,6 +96,9 @@ let g_globalRot = 0;
 let g_camera;
 let g_currentAt;
 
+// rendering
+let g_normalOn = false;
+
 // block animal
 let idleAnimate = true;
 let flapAnimate = false;
@@ -319,13 +322,19 @@ function addActions() {
         }
     }
 
-    // reset camera
+    // Button Events
     resetCamera = document.getElementById('resetCamButton');
     resetCamera.onclick = function() {
         g_camera.reset();
         g_globalAngle = 0;
         g_globalAngleY = 0;
         renderScene();
+    }
+    document.getElementById('normalOn').onclick = function() {
+        g_normalOn = true;
+    }
+    document.getElementById('normalOff').onclick = function() {
+        g_normalOn = false;
     }
 }
 

@@ -107,8 +107,9 @@ function renderMap() {
 
     // plane
     var earth = new Cube();
-    earth.color = [0.5, 0.5, 1.0, 1];
+    earth.color = [1, 0.5, 0, 1];
     earth.textureNum = -2; // 1
+    earth.matrix.translate(0, -3.09, 0);
     earth.matrix.translate(0, -0.9, 0);
     earth.matrix.scale(32, 0, 32);
     earth.matrix.translate(-0.5, 0, -0.5);
@@ -124,19 +125,24 @@ function renderMap() {
 }
 
 function renderTesting() {
-    var cube = new Cube();
-    cube.color = [1, 0.5, 0, 1]
-    // cube.textureNum = -2;
-    cube.textureNum = -3; // Normals
-    cube.matrix.translate(0, 0.75, 0);
-    cube.matrix.scale(1.25, 1.25, 1.25);
-    cube.matrix.translate(-0.5, -0.5, -0.5);
-    cube.render();
+    var target = new Cube();
+    target.color = [1, 0.5, 0, 1]
+    // target.textureNum = -2;
+    if(g_normalOn) {
+        target.textureNum = -3;
+    }
+    else {
+        target.textureNum = -2;
+    }
+    target.matrix.translate(0, 0.75, 0);
+    target.matrix.scale(1.25, 1.25, 1.25);
+    target.matrix.translate(-0.5, -0.5, -0.5);
+    target.rendertest();
 
     var room = new Cube();
     room.color = [0, 0.5, 0.5, 1];
     room.textureNum = -2;
-    room.matrix.translate(0, 3, 0);
+    room.matrix.translate(0, 1, 0);
     room.matrix.scale(10, 10, 10);
     room.matrix.translate(-0.5, -0.5, -0.5);
     room.render();
