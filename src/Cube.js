@@ -6,7 +6,7 @@ class Cube{
         //this.size = 5.0;
         //this.sides = 3.0;
         this.matrix = new Matrix4();
-        this.textureNum = 0; // -2 color, -1 uv, 0 tex0, else err
+        this.textureNum = -2; // -2 color, -1 uv, 0 tex0, else err
         this.cubeVerts = [
             0, 0, 0,   1, 1, 0,   1, 0, 0,
             0, 0, 0,   0, 1, 0,   1, 1, 0,

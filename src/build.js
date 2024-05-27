@@ -131,9 +131,6 @@ function renderTesting() {
     if(g_normalOn) {
         target.textureNum = -3;
     }
-    else {
-        target.textureNum = -2;
-    }
     target.matrix.translate(0, 0.75, 0);
     target.matrix.scale(1.25, 1.25, 1.25);
     target.matrix.translate(-0.5, -0.5, -0.5);
@@ -141,11 +138,13 @@ function renderTesting() {
 
     var room = new Cube();
     room.color = [0, 0.5, 0.5, 1];
-    room.textureNum = -2;
+    if(g_normalOn) {
+        room.textureNum = -3;
+    }
     room.matrix.translate(0, 1, 0);
-    room.matrix.scale(10, 10, 10);
+    room.matrix.scale(-10, -10, -10);
     room.matrix.translate(-0.5, -0.5, -0.5);
-    room.render();
+    room.rendertest();
 
 }
 
