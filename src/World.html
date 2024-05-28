@@ -15,13 +15,30 @@
       <br>
       <p> Rotate Camera with Right Click.</p>
       <p> Left click enables in-canvas movement with WASD/Arrows. Press Esc to unlock cursor.</p>
+      <p id="elephName">Fluffy the Elephant</p>
       <br>
+      <p>Current Animation: <label id="currentAnimation">None</label></p>
+      <div id="wrapper">
+        <button type="button" id="idleButton" onclick="currentAnimation.innerText = this.innerText">Idle Animation</button>
+        <button type="button" id="flapButton" onclick="currentAnimation.innerText = this.innerText">Flying Animation</button>
+        <button type="button" id="clearButton" onclick="currentAnimation.innerText = 'None'">Clear Animations | Reset Sliders</button>
+      </div>
+      <form id="lightForm">
+        Light X <input type="range" min="-250" max="250" value="0" class="slider" id="lightSlideX">
+        Light Y <input type="range" min="-250" max="250" value="100" class="slider" id="lightSlideY">
+        Light Z <input type="range" min="-250" max="250" value="200" class="slider" id="lightSlideZ">
+      </form>
       <p>
         <button type="button" id="resetCamButton">Reset Camera</button>
+        <button type="button" id="animateLightButton">Toggle Light Cycle</button>
+        <button type="button" id="resetLightButton">Reset Light</button>
       </p>
       <p>
         <button type="button" id="normalOn">Normal On</button>
         <button type="button" id="normalOff">Normal Off</button>
+        <br>
+        <button type="button" id="lightOn">Light On</button>
+        <button type="button" id="lightOff">Light Off</button>
       </p>
     </div>
      

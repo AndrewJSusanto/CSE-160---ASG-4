@@ -6,6 +6,7 @@ class Cube {
         //this.size = 5.0;
         //this.sides = 3.0;
         this.matrix = new Matrix4();
+        this.normalMatrix = new Matrix4();
         this.textureNum = -2; // -2 color, -1 uv, 0 tex0, else err
         this.cubeVerts = [
             0, 0, 0,   1, 1, 0,   1, 0, 0,
@@ -21,10 +22,6 @@ class Cube {
             0, 0, 0,   1, 0, 1,   0, 0, 1,
             0, 0, 0,   1, 0, 0,   1, 0, 1
         ]
-        this.uvCoords = [
-            
-        ]
-
     }
 
     render(){
@@ -139,6 +136,7 @@ class Cube {
         gl.uniform1i(u_whichTexture, this.textureNum);
         
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
+        gl.uniformMatrix4fv(u_NormalMatrix, false, this.normalMatrix.elements);
 
 // Front Cube
         //gl.uniform4f(u_FragColor, 0, 0, 0, rgba[3]);
@@ -162,37 +160,36 @@ class Cube {
         );
         drawTriangle3DUVNormal(
             [0, 1, 0,   1, 1, 1,    1, 1, 0],
-            [1, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 1, 0],
             [0, 1, 0,   0, 1, 0,    0, 1, 0]
         );
 
 // Left Cube
         gl.uniform4f(u_FragColor, rgba[0] * 0.7, rgba[1] * 0.7, rgba[2] * 0.7, rgba[3]);
-        //gl.uniform4f(u_FragColor, 0, 0, 0, rgba[3]);
-
         drawTriangle3DUVNormal(
-            [1, 1, 0,   1, 1, 1,    1, 0, 0],
-            [0, 0, 0, 1, 1, 1],
+            [1, 0, 1,   1, 1, 1,    1, 1, 0],
+            [1, 0, 1, 1, 0, 1],
             [1, 0, 0,   1, 0, 0,    1, 0, 0]
         );
         drawTriangle3DUVNormal(
-            [1, 0, 0,   1, 1, 1,    1, 0, 1],
-            [0, 0, 1, 1, 1, 0],
+            [1, 0, 1,   1, 0, 0,    1, 1, 0],
+            [1, 0, 0, 0, 0, 1],
             [1, 0, 0,   1, 0, 0,    1, 0, 0]
-        )
+        );
+
+        
 
 // Right Cube
         gl.uniform4f(u_FragColor, rgba[0] * 0.8, rgba[1] * 0.8, rgba[2] * 0.8, rgba[3]);
-        //gl.uniform4f(u_FragColor, 0, 0, 0, rgba[3]);
         drawTriangle3DUVNormal(
-            [0, 1, 0,   0, 1, 1,    0, 0, 0],
-            [0, 0, 0, 1, 1, 1],
-            [-1, 0, 0,  -1, 0, 0,   -1, 0, 0]
+            [0, 0, 0,   0, 0, 1,    0, 1, 0],
+            [1, 0, 0, 0, 1, 1],
+            [-1, 0, 0,   -1, 0, 0,    -1, 0, 0]
         );
         drawTriangle3DUVNormal(
-            [0, 0, 0,   0, 1, 1,    0, 0, 1],
-            [0, 0, 1, 1, 1, 0],
-            [-1, 0, 0,  -1, 0, 0,   -1, 0, 0]
+            [0, 1, 1,   0, 0, 1,    0, 1, 0],
+            [0, 1, 0, 0, 1, 1],
+            [-1, 0, 0,   -1, 0, 0,    -1, 0, 0]
         );
 
 // Back Cube

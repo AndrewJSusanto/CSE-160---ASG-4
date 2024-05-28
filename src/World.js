@@ -8,8 +8,10 @@ var VSHADER_SOURCE =    `
 
   varying vec2 v_UV;
   varying vec3 v_Normal;
+  varying vec4 v_VertPos;
   
   uniform mat4 u_ModelMatrix;
+  uniform mat4 u_NormalMatrix;
   uniform mat4 u_GlobalRotateMatrix;
   uniform mat4 u_GlobalRotateMatrixY;
   uniform mat4 u_ViewMatrix;
@@ -18,7 +20,11 @@ var VSHADER_SOURCE =    `
   void main() {
     gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_GlobalRotateMatrix * u_GlobalRotateMatrixY * u_ModelMatrix * a_Position;
     v_UV = a_UV;
-    v_Normal = a_Normal;
+    // mat4 NormalMatrix = transpose(inverse(u_ModelMatrix));
+    v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 1)));
+    // v_Normal = normalize(vec3(u_ModelMatrix * vec4(a_Normal, 1)));
+    // v_Normal = a_Normal;
+    v_VertPos = u_ModelMatrix * a_Position;
   }`
 
 // Fragment shader program
@@ -27,8 +33,13 @@ var FSHADER_SOURCE = `
   
   varying vec2 v_UV;
   varying vec3 v_Normal;
+  varying vec4 v_VertPos;
 
   uniform vec4 u_FragColor;
+  uniform vec3 u_lightPos;
+  uniform vec3 u_cameraPos;
+  uniform bool u_lightOn;
+
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
   uniform sampler2D u_Sampler2;
@@ -56,6 +67,50 @@ var FSHADER_SOURCE = `
     else {
         gl_FragColor = vec4(1, 0.2, 0.2, 1); // error put a reddish color
     }
+
+    vec3 lightVector = u_lightPos - vec3(v_VertPos);
+    float r = length(lightVector);
+
+    // Distance vis
+    // if (r < 1.0) {
+    //     gl_FragColor = vec4(1, 0, 0, 1);
+    // }
+    // else if (r < 2.0) {
+    //     gl_FragColor = vec4(0, 1, 0, 1);
+    // }
+    // else if (r < 3.0) {
+    //     gl_FragColor = vec4(0, 0, 1, 1);
+    // }
+    
+    // Light falloff vis 1/r^2
+    // gl_FragColor = vec4( vec3(gl_FragColor) / (r * r), 1);
+
+    // N dot L
+    vec3 L = normalize(lightVector);
+    vec3 N = normalize(v_Normal);
+    float nDotL = max(dot(N, L), 0.0);
+
+    // R
+    vec3 R = reflect(-L, N);
+
+    // eye
+    vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
+
+    // Spec
+    float specular = pow(max(dot(E, R), 0.0), 32.0);
+
+    vec3 diffuse = vec3(gl_FragColor) * nDotL * 0.7;
+    vec3 ambient = vec3(gl_FragColor) * 0.5;
+
+    if(u_lightOn) {
+        if(u_whichTexture == 0 || u_whichTexture == 1 || u_whichTexture == 2) { // Specular for textured objects only
+            gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+        }
+        else {
+            gl_FragColor = vec4(diffuse + ambient, 1.0);
+        }
+    }
+
   }`
 
 // Global Variables
@@ -66,6 +121,10 @@ let a_UV;
 let a_Normal;
 let u_FragColor;
 let u_Size;
+let u_cameraPos;
+let u_lightPos;
+let u_lightOn;
+let u_NormalMatrix;
 let u_ModelMatrix;
 let u_ProjectionMatrix; // eventually set by glPerspective()
 let u_ViewMatrix; // eventually set by lookAt()
@@ -87,20 +146,8 @@ let playerZ = 0;
 
 let cursorPosition = [0, 0];
 
-// camera rotation
-let g_globalAngle = 0;
-let g_globalAngleY = 0;
-let g_globalRot = 0;
-
-// perspective
-let g_camera;
-let g_currentAt;
-
-// rendering
-let g_normalOn = false;
-
-// block animal
-let idleAnimate = true;
+// elephant
+let idleAnimate = false;
 let flapAnimate = false;
 let spinAnimate = false;
 let g_legAngle = -10;
@@ -114,6 +161,21 @@ let g_trunk3Angle = -3;
 let g_tailAngle = 0;
 let g_headAngle = 0;
 let g_testAngle = 0;
+
+// camera rotation
+let g_globalAngle = 0;
+let g_globalAngleY = 0;
+let g_globalRot = 0;
+
+// perspective
+let g_camera;
+let g_currentAt;
+
+// rendering / lighting
+let g_normalOn = false;
+let g_lightOn = true;
+let g_lightAnimateOn = false;
+let g_lightPos = [0, 1, 2];
 
 
 var g_startTime = performance.now()/1000.0;
@@ -164,6 +226,12 @@ function connectVariablesToGLSL() {
     u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
     if (!u_FragColor) {
         console.log('Failed to get the storage location of u_FragColor');
+        return;
+    }
+
+    u_NormalMatrix = gl.getUniformLocation(gl.program, 'u_NormalMatrix');
+    if (!u_NormalMatrix) {
+        console.log('Failed to get the storage location of u_NormalMatrix');
         return;
     }
 
@@ -218,6 +286,24 @@ function connectVariablesToGLSL() {
     u_whichTexture = gl.getUniformLocation(gl.program, 'u_whichTexture');
     if (!u_whichTexture) {
         console.log('Failed to get the storage location of u_whichTexture');
+        return;
+    }
+
+    u_lightPos = gl.getUniformLocation(gl.program, 'u_lightPos');
+    if (!u_lightPos) {
+        console.log ('Failed to get the storage location of u_lightPos');
+        return;
+    }
+
+    u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
+    if (!u_cameraPos) {
+        console.log ('Failed to get the storage location of u_cameraPos');
+        return;
+    }
+
+    u_lightOn = gl.getUniformLocation(gl.program, 'u_lightOn');
+    if (!u_lightOn) {
+        console.log ('Failed to get the storage location of u_lightOn');
         return;
     }
 
@@ -330,12 +416,88 @@ function addActions() {
         g_globalAngleY = 0;
         renderScene();
     }
+    resetLight = document.getElementById('resetLightButton');
+    resetLight.onclick = function() {
+        g_lightPos = [0, 1, 2];
+        document.getElementById('lightForm').reset();
+        renderScene();
+    }
+    animateLight = document.getElementById('animateLightButton');
+    animateLight.onclick = function() {
+        g_lightAnimateOn = !g_lightAnimateOn;
+    }
     document.getElementById('normalOn').onclick = function() {
         g_normalOn = true;
     }
     document.getElementById('normalOff').onclick = function() {
         g_normalOn = false;
     }
+    document.getElementById('lightOn').onclick = function() {
+        g_lightOn = true;
+    }
+    document.getElementById('lightOff').onclick = function() {
+        g_lightOn = false;
+    }
+    document.getElementById('lightSlideX').addEventListener('mousemove', function (ev) {
+        if (ev.buttons == 1) {
+            g_lightPos[0] = this.value / 100;
+            renderScene();
+        }
+    })
+    document.getElementById('lightSlideY').addEventListener('mousemove', function (ev) {
+        if (ev.buttons == 1) {
+            g_lightPos[1] = this.value / 100;
+            document.getElementById('lightY').innerText = this.value / 100;
+            renderScene();
+        }
+    })
+    document.getElementById('lightSlideZ').addEventListener('mousemove', function (ev) {
+        if (ev.buttons == 1) {
+            g_lightPos[2] = this.value / 100;
+            renderScene();
+        }
+    })
+
+    // elephant
+    idleAnimation = document.getElementById('idleButton');
+    idleAnimation.addEventListener('click', function (e) {
+        idleAnimate = true;
+        if(flapAnimate) {
+            flapAnimate = false;
+        }
+        if(spinAnimate) {
+            spinAnimate = false;
+        }
+    })
+    // flapButton
+    flapAnimation = document.getElementById('flapButton');
+    flapAnimation.addEventListener('click', function (e) {
+        flapAnimate = true;
+        if(idleAnimate) {
+            idleAnimate = false
+        }
+        if(spinAnimate) {
+            spinAnimate = false;
+        }
+    })
+    // clearAnimations
+    clearAnimations = document.getElementById('clearButton').addEventListener('click', function (e) {
+        flapAnimate = false;
+        idleAnimate = false;
+        spinAnimate = false;
+
+        g_legAngle = -10;
+        g_earAngle = 15;
+        g_trunkAngle = -20;
+        g_tailAngle = 0;
+        g_headAngle = 0;
+        g_testAngle = 0;
+        g_trunk1Angle = -3;
+        g_trunk2Angle = -3;
+        g_trunk3Angle = -3;
+            // leg, ear trunk, t1, t2, t3, tail, head, 
+        document.getElementById('sliderForm').reset();
+    });
 }
 
 function mapIndex() {
@@ -504,7 +666,7 @@ function sendImageToTEXTURE1(image) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 
-    // Set the texture unit 0 to the sampler
+    // Set the texture unit 1 to the sampler
     gl.uniform1i(u_Sampler1, 1);
 
 
@@ -532,7 +694,7 @@ function sendImageToTEXTURE2(image) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 
-    // Set the texture unit 0 to the sampler
+    // Set the texture unit 2 to the sampler
     gl.uniform1i(u_Sampler2, 2);
 
 
@@ -576,6 +738,7 @@ function convertCoordinatesEventToGL(ev) {
 function tick() {
     // Update
     g_seconds = performance.now()/1000.0 - g_startTime;
+
     renderScene();
     requestAnimationFrame(tick);
     animate();
@@ -601,13 +764,15 @@ function renderScene() {
     //                   g_up[0],  g_up[1],  g_up[2]);
     gl.uniformMatrix4fv(u_ViewMatrix, false, viewMat.elements);
 
+    // gl.uniformMatrix4fv(u_NormalMatrix, false, ...)
+
     // Clear depth buffer bit to prevent depth being leftover from prev. frames
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     var startTime = performance.now();
 
     renderMap();
-    // renderAllShapes();
+    renderAllShapes();
     renderTesting();
 
     var duration = performance.now() - startTime;
@@ -617,6 +782,10 @@ function renderScene() {
 }
 
 function animate() {
+    if(g_lightAnimateOn) {
+        g_lightPos[0] = Math.cos(g_seconds);
+    }
+
     if(idleAnimate) {
         idle();
     }
@@ -662,10 +831,9 @@ function spin() {
         else {
             reset.click();
         }
-        document.getElementById('elephName').innerText = "Smarto the Elephant.";
+        document.getElementById('elephName').innerText = "Bluey the Elephant.";
     }, 1500);
 }
-
 
 function sendTextToHTML(text, htmlID) {
     var htmlElement = document.getElementById(htmlID);
