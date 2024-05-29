@@ -130,6 +130,7 @@ function renderTesting() {
 
 // light status
     gl.uniform1i(u_lightOn, g_lightOn);
+    gl.uniform1i(u_spotOn, g_spotOn);
 // light
     gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
     var light = new Cube();
@@ -138,6 +139,15 @@ function renderTesting() {
     light.matrix.scale(-0.1, -0.1, -0.1);
     light.matrix.translate(-0.5, -0.5, -0.5);
     light.rendertest();
+// spotlight
+    gl.uniform3f(u_lightPos2, g_lightPos2[0], g_lightPos2[1], g_lightPos2[2]);
+    var spot = new Cube();
+    spot.color = [2, 2, 0, 1];
+    spot.matrix.translate(g_lightPos2[0], g_lightPos2[1], g_lightPos2[2]);
+    spot.matrix.scale(-0.1, -0.1, -0.1);
+    spot.matrix.translate(-0.5, -0.5, -0.5);
+    spot.rendertest();
+
 
     var target = new Cube();
     target.color = [1, 0.5, 0, 1]

@@ -37,8 +37,10 @@ var FSHADER_SOURCE = `
 
   uniform vec4 u_FragColor;
   uniform vec3 u_lightPos;
+  uniform vec3 u_lightPos2;
   uniform vec3 u_cameraPos;
   uniform bool u_lightOn;
+  uniform bool u_spotOn;
 
   uniform sampler2D u_Sampler0;
   uniform sampler2D u_Sampler1;
@@ -69,7 +71,10 @@ var FSHADER_SOURCE = `
     }
 
     vec3 lightVector = u_lightPos - vec3(v_VertPos);
+    vec3 spotVector = u_lightPos2 - vec3(v_VertPos);
+
     float r = length(lightVector);
+    float r2 = length(spotVector);
 
     // Distance vis
     // if (r < 1.0) {
@@ -90,25 +95,57 @@ var FSHADER_SOURCE = `
     vec3 N = normalize(v_Normal);
     float nDotL = max(dot(N, L), 0.0);
 
+    // N dot L Spotlight
+    vec3 L2 = normalize(spotVector);
+    vec3 N2 = normalize(v_Normal);
+    float nDotL2 = max(dot(-N2, L2), 0.0);
+
+    vec3 H = normalize(vec3(spotVector - u_lightPos2));
+    // float theta = acos(dot(H, vec3(0, 1, 0))) - 3.1415926538 / 2;
+
     // R
     vec3 R = reflect(-L, N);
+    //vec3 R2 = reflect(-L2, N2);
 
     // eye
     vec3 E = normalize(u_cameraPos - vec3(v_VertPos));
 
     // Spec
     float specular = pow(max(dot(E, R), 0.0), 32.0);
+    //float specular2 = pow(max(dot(E, R2), 0.0), 10.0);
 
     vec3 diffuse = vec3(gl_FragColor) * nDotL * 0.7;
+    vec3 diffuse2 = vec3(gl_FragColor) * nDotL2 * 0.7;
+
     vec3 ambient = vec3(gl_FragColor) * 0.5;
+    vec3 ambient2 = vec3(gl_FragColor) * 0.7;
 
     if(u_lightOn) {
-        if(u_whichTexture == 0 || u_whichTexture == 1 || u_whichTexture == 2) { // Specular for textured objects only
-            gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+        if(u_spotOn) { // removed && abs(theta) < 0.5;
+            if(u_whichTexture == 0 || u_whichTexture == 1 || u_whichTexture == 2) { // Specular for textured objects only
+                // gl_FragColor = vec4(specular + specular2 + diffuse + diffuse2 + ambient + ambient2, 1);
+                gl_FragColor = vec4(specular + diffuse + diffuse2 + ambient + ambient2, 1);
+            }
+            else {
+                gl_FragColor = vec4(diffuse + diffuse2 + ambient, 1.0); // no spec on no tex
+            }
         }
         else {
-            gl_FragColor = vec4(diffuse + ambient, 1.0);
+            if(u_whichTexture == 0 || u_whichTexture == 1 || u_whichTexture == 2) { // Specular for textured objects only
+                gl_FragColor = vec4(specular + diffuse + ambient, 1.0);
+            }
+            else {
+                gl_FragColor = vec4(diffuse + ambient, 1.0);
+            }
         }
+    }
+    else if (u_spotOn) {
+        // if(abs(theta) < 0.5) {
+        //     gl_FragColor = vec4(diffuse2 + ambient2, 1);
+        // }
+        // else {
+        //     gl_FragColor = vec4(diffuse2 + ambient, 1);
+        // }
     }
 
   }`
@@ -123,7 +160,9 @@ let u_FragColor;
 let u_Size;
 let u_cameraPos;
 let u_lightPos;
+let u_lightPos2;
 let u_lightOn;
+let u_spotOn;
 let u_NormalMatrix;
 let u_ModelMatrix;
 let u_ProjectionMatrix; // eventually set by glPerspective()
@@ -176,6 +215,9 @@ let g_normalOn = false;
 let g_lightOn = true;
 let g_lightAnimateOn = false;
 let g_lightPos = [0, 1, 2];
+
+let g_spotOn = false;
+let g_lightPos2 = [0, 4, 2];
 
 
 var g_startTime = performance.now()/1000.0;
@@ -295,6 +337,12 @@ function connectVariablesToGLSL() {
         return;
     }
 
+    u_lightPos2 = gl.getUniformLocation(gl.program, 'u_lightPos2');
+    if (!u_lightPos2) {
+        console.log ('Failed to get the storage location of u_lightPos2');
+        return;
+    }
+
     u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
     if (!u_cameraPos) {
         console.log ('Failed to get the storage location of u_cameraPos');
@@ -304,6 +352,12 @@ function connectVariablesToGLSL() {
     u_lightOn = gl.getUniformLocation(gl.program, 'u_lightOn');
     if (!u_lightOn) {
         console.log ('Failed to get the storage location of u_lightOn');
+        return;
+    }
+
+    u_spotOn = gl.getUniformLocation(gl.program, 'u_spotOn');
+    if (!u_spotOn) {
+        console.log ('Failed to get the storage location of u_spotOn');
         return;
     }
 
@@ -425,6 +479,10 @@ function addActions() {
     animateLight = document.getElementById('animateLightButton');
     animateLight.onclick = function() {
         g_lightAnimateOn = !g_lightAnimateOn;
+    }
+    spotLight = document.getElementById('spotOn');
+    spotLight.onclick = function () {
+        g_spotOn = !g_spotOn;
     }
     document.getElementById('normalOn').onclick = function() {
         g_normalOn = true;
